@@ -1,1 +1,2 @@
-# PhoneWave---A-music-bot-for-Discord
+# PhoneWave---A music bot for Discord
+A small Discord music bot
