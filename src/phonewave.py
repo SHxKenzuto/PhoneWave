@@ -17,6 +17,7 @@ class PhoneWave:
 def urlCreator(msg):
     msg=msg.replace(" ","+")
     url="https://www.youtube.com/results?search_query="+msg
+    url = urllib.quote(url.encode("utf8"),':/')
     src=urllib.request.urlopen(url)
     video_list=re.findall(r"watch\?v=(\S{11})", src.read().decode())
     return "https://www.youtube.com/watch?v="+video_list[0]
@@ -123,5 +124,4 @@ async def loop(ctx):
 		if phonewaves[ctx.guild.id].loop:
 			await looper(ctx,voice_client,phonewaves[ctx.guild.id].current_song)
 
-bot.run("Your token goes here!")
-
+bot.run("ODg2OTkzODc0ODA2MDA1ODMx.YT9raw.xPYWCbUDzJ4Cn4UjqVC__pW8__U")
