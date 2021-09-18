@@ -15,9 +15,10 @@ class PhoneWave:
 		self.loop = False
      
 def urlCreator(msg):
-    msg=msg.replace(" ","+")
+    #msg=msg.replace(" ","+")
     url="https://www.youtube.com/results?search_query="+msg
-    url = urllib.quote(url.encode("utf8"),':/')
+    url = urllib.parse.quote_plus(url.encode("utf8"),safe=':/?=+')
+    print (url)
     src=urllib.request.urlopen(url)
     video_list=re.findall(r"watch\?v=(\S{11})", src.read().decode())
     return "https://www.youtube.com/watch?v="+video_list[0]
