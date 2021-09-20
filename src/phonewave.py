@@ -14,7 +14,7 @@ class PhoneWave:
 	def __init__(self,current_song,id):
 		self.current_song=current_song
 		self.loop = False
-		self.player_id = id
+		self.latest_player_id = id
 	 
 def urlCreator(msg):
 	url="https://www.youtube.com/results?search_query="+msg
@@ -32,21 +32,21 @@ def musicGenerator(url_video):
 async def player(ctx,voice_client,url_video, id):
 	musica_finale = musicGenerator(url_video)
 	voice_client.play(musica_finale)
-	await looper(ctx,voice_client,url_video)
 	while voice_client.is_playing():
 		await asyncio.sleep(1)
-	await asyncio.sleep(600)
-	if not (voice_client.is_playing()) and phonewaves[ctx.guild.id].player_id == id :
-		await voice_client.disconnect()
-		del phonewaves[ctx.guild.id]
+	if phonewaves[ctx.guild.id].loop == False:
+		await asyncio.sleep(600)
+		if not voice_client.is_playing() and phonewaves[ctx.guild.id].latest_player_id == id :
+			await voice_client.disconnect()
+			del phonewaves[ctx.guild.id]
 
 async def looper(ctx,voice_client,url_video):
-	while phonewaves[ctx.guild.id].loop:
-		if not voice_client.is_playing():
-			phonewaves[ctx.guild.id].player_id = random.random()
-			id = phonewaves[ctx.guild.id].player_id
-			await player(ctx,voice_client,url_video,id)
-		await asyncio.sleep(1)
+    while phonewaves[ctx.guild.id]!=None and phonewaves[ctx.guild.id].loop:
+        if not voice_client.is_playing():
+            phonewaves[ctx.guild.id].latest_player_id = random.random()
+            id = phonewaves[ctx.guild.id].latest_player_id
+            await player(ctx,voice_client,url_video,id)
+        await asyncio.sleep(1)
 
 @bot.command()
 async def play(ctx,*,msg):
@@ -65,7 +65,7 @@ async def play(ctx,*,msg):
 	else:
 		url_video = msg
 	phonewaves[ctx.guild.id]=PhoneWave(url_video,random.random())
-	id = phonewaves[ctx.guild.id].player_id
+	id = phonewaves[ctx.guild.id].latest_player_id
 	await ctx.send(url_video)
 	await player(ctx,voice_client,url_video,id)
 
@@ -115,8 +115,8 @@ async def replay(ctx):
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
 	if voice_client.is_connected() and not(voice_client.is_playing()) and ctx.message.author.voice.channel == voice_client.channel:
 		await ctx.send(phonewaves[ctx.guild.id].current_song)
-		phonewaves[ctx.guild.id].player_id = random.random()
-		id = phonewaves[ctx.guild.id].player_id
+		phonewaves[ctx.guild.id].latest_player_id = random.random()
+		id = phonewaves[ctx.guild.id].latest_player_id
 		await player(ctx,voice_client,phonewaves[ctx.guild.id].current_song,id)
 
 @bot.command()
