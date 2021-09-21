@@ -36,8 +36,8 @@ async def player(ctx,voice_client,url_video, id):
 	voice_client.play(musica_finale)
 	while voice_client.is_playing():
 		await asyncio.sleep(1)
-	if phonewaves[ctx.guild.id].loop == False:
-		await asyncio.sleep(30)
+	if phonewaves[ctx.guild.id]!=None and phonewaves[ctx.guild.id].loop == False:
+		await asyncio.sleep(600)
 		if voice_client!=None and not voice_client.is_playing() and phonewaves[ctx.guild.id]!= None and phonewaves[ctx.guild.id].latest_player_id == id :
 			await voice_client.disconnect()
 			del phonewaves[ctx.guild.id]
@@ -118,7 +118,7 @@ async def replay(ctx):
 		await ctx.send("You have to be in a voice channel in order to use this command")
 		return
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
-	if  voice_client!=None  and not(voice_client.is_playing()) and ctx.message.author.voice.channel == voice_client.channel:
+	if  voice_client!=None and not voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
 		await ctx.send(phonewaves[ctx.guild.id].current_song)
 		phonewaves[ctx.guild.id].latest_player_id = random.random()
 		id = phonewaves[ctx.guild.id].latest_player_id
