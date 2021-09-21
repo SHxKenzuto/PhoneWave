@@ -1,8 +1,10 @@
 import discord
+from discord import client
 from discord.ext import commands
 import urllib
 import re
 from discord import FFmpegPCMAudio
+from discord.gateway import VoiceKeepAliveHandler
 import pafy
 import asyncio
 import random
@@ -36,12 +38,14 @@ async def player(ctx,voice_client,url_video, id):
 		await asyncio.sleep(1)
 	if phonewaves[ctx.guild.id].loop == False:
 		await asyncio.sleep(600)
-		if not voice_client.is_playing() and phonewaves[ctx.guild.id].latest_player_id == id :
-			await voice_client.disconnect()
-			del phonewaves[ctx.guild.id]
+		if voice_client!=None and not voice_client.is_playing():
+			if phonewaves[ctx.guild.id].latest_player_id == id :
+				await voice_client.disconnect()
+				del phonewaves[ctx.guild.id]
+				phonewaves[ctx.guild.id]=None
 
 async def looper(ctx,voice_client,url_video):
-    while phonewaves[ctx.guild.id]!=None and phonewaves[ctx.guild.id].loop:
+    while (phonewaves[ctx.guild.id].loop if phonewaves[ctx.guild.id]!=None else False):
         if not voice_client.is_playing():
             phonewaves[ctx.guild.id].latest_player_id = random.random()
             id = phonewaves[ctx.guild.id].latest_player_id
@@ -56,18 +60,19 @@ async def play(ctx,*,msg):
 	voice_channel = ctx.message.author.voice.channel
 	voice = discord.utils.get(ctx.guild.voice_channels,name=voice_channel.name)
 	voice_client=discord.utils.get(bot.voice_clients,guild=ctx.guild)
-	if voice_client == None:
-		voice_client = await voice.connect()
-	else:
-		await voice_client.move_to(voice_channel)
-	if re.fullmatch(r"https:\/\/www.youtube.com\/watch\?v=\S{11}",msg) == None:
-		url_video = urlCreator(msg)
-	else:
-		url_video = msg
-	phonewaves[ctx.guild.id]=PhoneWave(url_video,random.random())
-	id = phonewaves[ctx.guild.id].latest_player_id
-	await ctx.send(url_video)
-	await player(ctx,voice_client,url_video,id)
+	if voice_client == None or (not voice_client.is_playing() if voice_client != None else False):
+		if voice_client == None:
+			voice_client = await voice.connect()
+		elif voice_channel != voice_client:
+			await voice_client.move_to(voice_channel)
+		if re.fullmatch(r"https:\/\/www.youtube.com\/watch\?v=\S{11}",msg) == None:
+			url_video = urlCreator(msg)
+		else:
+			url_video = msg
+		phonewaves[ctx.guild.id]=PhoneWave(url_video,random.random())
+		id = phonewaves[ctx.guild.id].latest_player_id
+		await ctx.send(url_video)
+		await player(ctx,voice_client,url_video,id)
 
 
 @bot.command()
@@ -76,7 +81,7 @@ async def skip(ctx):
 		await ctx.send("You have to be in a voice channel in order to use this command")
 		return
 	voice_client=discord.utils.get(bot.voice_clients,guild=ctx.guild)
-	if voice_client.is_connected() and voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
+	if  voice_client!=None and voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
 		voice_client.stop()
 
 @bot.command()
@@ -85,9 +90,10 @@ async def leave(ctx):
 		await ctx.send("You have to be in a voice channel in order to use this command")
 		return
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
-	if voice_client.is_connected() and ctx.message.author.voice.channel == voice_client.channel:
+	if  voice_client!=None and ctx.message.author.voice.channel == voice_client.channel:
 		await voice_client.disconnect()
 		del phonewaves[ctx.guild.id]
+		phonewaves[ctx.guild.id]=None
 
 @bot.command()
 async def pause(ctx):
@@ -95,7 +101,7 @@ async def pause(ctx):
 		await ctx.send("You have to be in a voice channel in order to use this command")
 		return
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
-	if voice_client.is_connected() and voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
+	if  voice_client!=None and voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
 		voice_client.pause()
 
 @bot.command()
@@ -104,7 +110,7 @@ async def resume(ctx):
 		await ctx.send("You have to be in a voice channel in order to use this command")
 		return
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
-	if voice_client.is_connected() and voice_client.is_paused() and ctx.message.author.voice.channel == voice_client.channel:
+	if  voice_client!=None and voice_client.is_paused() and ctx.message.author.voice.channel == voice_client.channel:
 		voice_client.resume()
 
 @bot.command()
@@ -113,7 +119,7 @@ async def replay(ctx):
 		await ctx.send("You have to be in a voice channel in order to use this command")
 		return
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
-	if voice_client.is_connected() and not(voice_client.is_playing()) and ctx.message.author.voice.channel == voice_client.channel:
+	if  voice_client!=None  and not(voice_client.is_playing()) and ctx.message.author.voice.channel == voice_client.channel:
 		await ctx.send(phonewaves[ctx.guild.id].current_song)
 		phonewaves[ctx.guild.id].latest_player_id = random.random()
 		id = phonewaves[ctx.guild.id].latest_player_id
@@ -125,7 +131,7 @@ async def loop(ctx):
 		await ctx.send("You have to be in a voice channel in order to use this command")
 		return
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
-	if voice_client.is_connected() and ctx.message.author.voice.channel == voice_client.channel:
+	if voice_client!=None  and ctx.message.author.voice.channel == voice_client.channel:
 		phonewaves[ctx.guild.id].loop=not(phonewaves[ctx.guild.id].loop)
 		await ctx.send("Loop {val}".format(val="ON" if phonewaves[ctx.guild.id].loop else "OFF"))
 		if phonewaves[ctx.guild.id].loop:
