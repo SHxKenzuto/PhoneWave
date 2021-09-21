@@ -37,15 +37,14 @@ async def player(ctx,voice_client,url_video, id):
 	while voice_client.is_playing():
 		await asyncio.sleep(1)
 	if phonewaves[ctx.guild.id].loop == False:
-		await asyncio.sleep(600)
-		if voice_client!=None and not voice_client.is_playing():
-			if phonewaves[ctx.guild.id].latest_player_id == id :
-				await voice_client.disconnect()
-				del phonewaves[ctx.guild.id]
-				phonewaves[ctx.guild.id]=None
+		await asyncio.sleep(30)
+		if voice_client!=None and not voice_client.is_playing() and phonewaves[ctx.guild.id]!= None and phonewaves[ctx.guild.id].latest_player_id == id :
+			await voice_client.disconnect()
+			del phonewaves[ctx.guild.id]
+			phonewaves[ctx.guild.id]=None
 
 async def looper(ctx,voice_client,url_video):
-    while (phonewaves[ctx.guild.id].loop if phonewaves[ctx.guild.id]!=None else False):
+    while phonewaves[ctx.guild.id]!=None and phonewaves[ctx.guild.id].loop:
         if not voice_client.is_playing():
             phonewaves[ctx.guild.id].latest_player_id = random.random()
             id = phonewaves[ctx.guild.id].latest_player_id
@@ -60,7 +59,7 @@ async def play(ctx,*,msg):
 	voice_channel = ctx.message.author.voice.channel
 	voice = discord.utils.get(ctx.guild.voice_channels,name=voice_channel.name)
 	voice_client=discord.utils.get(bot.voice_clients,guild=ctx.guild)
-	if voice_client == None or (not voice_client.is_playing() if voice_client != None else False):
+	if voice_client == None or not voice_client.is_playing():
 		if voice_client == None:
 			voice_client = await voice.connect()
 		elif voice_channel != voice_client:
