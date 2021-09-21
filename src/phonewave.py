@@ -37,7 +37,7 @@ async def player(ctx,voice_client,url_video, id):
 	while voice_client.is_playing():
 		await asyncio.sleep(1)
 	if phonewaves[ctx.guild.id].loop == False:
-		await asyncio.sleep(30)
+		await asyncio.sleep(600)
 		if voice_client!=None and not voice_client.is_playing() and phonewaves[ctx.guild.id]!= None and phonewaves[ctx.guild.id].latest_player_id == id :
 			await voice_client.disconnect()
 			del phonewaves[ctx.guild.id]
