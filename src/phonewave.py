@@ -143,4 +143,10 @@ async def loop(ctx):
 		if phonewaves[ctx.guild.id].loop:
 			await looper(ctx,voice_client,phonewaves[ctx.guild.id].current_song)
 
+@bot.event
+async def on_ready():
+	print("PhoneWave Bot Started")
+
 bot.run("ODg2OTkzODc0ODA2MDA1ODMx.YT9raw.xPYWCbUDzJ4Cn4UjqVC__pW8__U")
+
+print("PhoneWave Bot Stopped")
