@@ -11,6 +11,8 @@ import queue
 phonewaves = {}
 bot = commands.Bot(command_prefix='-')
 
+# INTERNAL DEFS
+
 class PhoneWave:
 	def __init__(self,current_song,id):
 		self.q = queue.Queue()
@@ -43,19 +45,20 @@ async def player(ctx,voice_client,id):
 		await asyncio.sleep(1)
 	if phonewaves[ctx.guild.id]!=None and (phonewaves[ctx.guild.id].loop == False or phonewaves[ctx.guild.id].q.empty()) :
 		await asyncio.sleep(600)
-		if voice_client!=None and not voice_client.is_playing() and phonewaves[ctx.guild.id]!= None and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
+		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
 			await voice_client.disconnect()
 			del phonewaves[ctx.guild.id]
-			phonewaves[ctx.guild.id]=None
 
 async def looper(ctx,voice_client,url_video):
-	while phonewaves[ctx.guild.id]!=None and phonewaves[ctx.guild.id].loop:
+	while ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].loop:
 		if not voice_client.is_playing():
 			phonewaves[ctx.guild.id].q.put(url_video)
 			phonewaves[ctx.guild.id].latest_player_id = random.random()
 			id = phonewaves[ctx.guild.id].latest_player_id
-			await player(ctx,voice_client,url_video)
+			await player(ctx,voice_client,id)
 		await asyncio.sleep(1)
+
+# DISCORD COMMANDS
 
 @bot.command()
 async def play(ctx,*,msg):
