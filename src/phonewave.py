@@ -43,7 +43,7 @@ async def player(ctx,voice_client,id):
 	voice_client.play(musica_finale)
 	while voice_client.is_playing():
 		await asyncio.sleep(1)
-	if phonewaves[ctx.guild.id]!=None and (phonewaves[ctx.guild.id].loop == False or phonewaves[ctx.guild.id].q.empty()) :
+	if ctx.guild.id in phonewaves and (phonewaves[ctx.guild.id].loop == False or phonewaves[ctx.guild.id].q.empty()) :
 		await asyncio.sleep(600)
 		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
 			await voice_client.disconnect()
@@ -80,6 +80,7 @@ async def play(ctx,*,msg):
 		phonewaves[ctx.guild.id]=PhoneWave(url_video,random.random())
 	else:
 		phonewaves[ctx.guild.id].q.put(url_video)
+		phonewaves[ctx.guild.id].latest_player_id = random.random()
 	id = phonewaves[ctx.guild.id].latest_player_id
 	await player(ctx,voice_client,id)
 
