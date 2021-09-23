@@ -47,7 +47,7 @@ async def player(ctx,voice_client,id):
 			await asyncio.sleep(1)
 	if ctx.guild.id in phonewaves:
  		phonewaves[ctx.guild.id].mutex.release()
-	if ctx.guild.id in phonewaves and (phonewaves[ctx.guild.id].loop == False or phonewaves[ctx.guild.id].q.empty()):
+	if ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].loop == False and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
 		await asyncio.sleep(600)
 		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
 			await voice_client.disconnect()
@@ -107,7 +107,7 @@ async def skipall(ctx):
 		return
 	voice_client=discord.utils.get(bot.voice_clients,guild=ctx.guild)
 	if  voice_client!=None and voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
-		while not phonewaves[ctx.guild.id].q.empty():
+		while ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
 			phonewaves[ctx.guild.id].q.get()
 		voice_client.stop()
 
@@ -148,9 +148,10 @@ async def replay(ctx):
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
 	if  voice_client!=None and not voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
 		await ctx.send(phonewaves[ctx.guild.id].current_song)
+  		phonewaves[ctx.guild.id].q.put(phonewaves[ctx.guild.id].current_song)
 		phonewaves[ctx.guild.id].latest_player_id = random.random()
 		id = phonewaves[ctx.guild.id].latest_player_id
-		await player(ctx,voice_client,phonewaves[ctx.guild.id].current_song,id)
+		await player(ctx,voice_client,id)
 
 @bot.command()
 async def loop(ctx):
@@ -162,6 +163,8 @@ async def loop(ctx):
 		phonewaves[ctx.guild.id].loop=not(phonewaves[ctx.guild.id].loop)
 		await ctx.send("Loop {val}".format(val="ON" if phonewaves[ctx.guild.id].loop else "OFF"))
 		if phonewaves[ctx.guild.id].loop:
+			while ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
+				phonewaves[ctx.guild.id].q.get()
 			await looper(ctx,voice_client,phonewaves[ctx.guild.id].current_song)
 
 @bot.event
