@@ -36,15 +36,17 @@ def musicGenerator(url_video):
 	return FFmpegPCMAudio(audio.url,**ffmpeg_options)
 
 async def player(ctx,voice_client,id):
-	await phonewaves[ctx.guild.id].mutex.acquire()
-	if not phonewaves[ctx.guild.id].q.empty():
+	if ctx.guild.id in phonewaves:
+		await phonewaves[ctx.guild.id].mutex.acquire()
+	if ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
 		phonewaves[ctx.guild.id].current_song = phonewaves[ctx.guild.id].q.get()
 		await ctx.send(phonewaves[ctx.guild.id].current_song)
 		musica_finale = musicGenerator(phonewaves[ctx.guild.id].current_song)
 		voice_client.play(musica_finale)
 		while voice_client.is_playing():
 			await asyncio.sleep(1)
-	phonewaves[ctx.guild.id].mutex.release()
+	if ctx.guild.id in phonewaves:
+ 		phonewaves[ctx.guild.id].mutex.release()
 	if ctx.guild.id in phonewaves and (phonewaves[ctx.guild.id].loop == False or phonewaves[ctx.guild.id].q.empty()):
 		await asyncio.sleep(600)
 		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
@@ -119,8 +121,7 @@ async def leave(ctx):
 	if  voice_client!=None and ctx.message.author.voice.channel == voice_client.channel:
 		await voice_client.disconnect()
 		del phonewaves[ctx.guild.id]
-		phonewaves[ctx.guild.id]=None
-
+  
 @bot.command()
 async def pause(ctx):
 	if ctx.message.author.voice==None:
