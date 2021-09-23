@@ -98,6 +98,18 @@ async def skip(ctx):
 		voice_client.stop()
 
 @bot.command()
+async def skipall(ctx):
+	if ctx.message.author.voice==None:
+		await ctx.send("You have to be in a voice channel in order to use this command")
+		return
+	voice_client=discord.utils.get(bot.voice_clients,guild=ctx.guild)
+	if  voice_client!=None and voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
+		while not phonewaves[ctx.guild.id].q.empty():
+			phonewaves[ctx.guild.id].q.get()
+		voice_client.stop()
+
+
+@bot.command()
 async def leave(ctx):
 	if ctx.message.author.voice==None:
 		await ctx.send("You have to be in a voice channel in order to use this command")
