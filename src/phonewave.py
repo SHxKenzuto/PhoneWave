@@ -79,6 +79,8 @@ async def play(ctx,*,msg):
 	if ctx.guild.id not in phonewaves:
 		phonewaves[ctx.guild.id]=PhoneWave(url_video,random.random())
 	else:
+		if not phonewaves[ctx.guild.id].q.empty():
+			ctx.send("Song queued in position {n}.".format(n = phonewaves[ctx.guild.id].q.qsize()))
 		phonewaves[ctx.guild.id].q.put(url_video)
 		phonewaves[ctx.guild.id].latest_player_id = random.random()
 	id = phonewaves[ctx.guild.id].latest_player_id
