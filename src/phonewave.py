@@ -3,6 +3,7 @@ from discord.ext import commands
 import urllib
 import re
 from discord import FFmpegPCMAudio
+from discord.ext.commands.errors import MissingRequiredArgument
 import pafy
 import asyncio
 import random
@@ -171,6 +172,10 @@ async def loop(ctx):
 async def on_ready():
 	print("PhoneWave Bot Started")
 
+@bot.event
+async def on_command_error(ctx,error):
+	if isinstance(error,MissingRequiredArgument):
+		await ctx.send("This command needs an argument")
 bot.run("ODg2OTkzODc0ODA2MDA1ODMx.YT9raw.xPYWCbUDzJ4Cn4UjqVC__pW8__U")
 
 print("PhoneWave Bot Stopped")
