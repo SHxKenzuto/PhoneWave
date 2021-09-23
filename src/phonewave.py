@@ -148,7 +148,7 @@ async def replay(ctx):
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
 	if  voice_client!=None and not voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
 		await ctx.send(phonewaves[ctx.guild.id].current_song)
-  		phonewaves[ctx.guild.id].q.put(phonewaves[ctx.guild.id].current_song)
+		phonewaves[ctx.guild.id].q.put(phonewaves[ctx.guild.id].current_song)
 		phonewaves[ctx.guild.id].latest_player_id = random.random()
 		id = phonewaves[ctx.guild.id].latest_player_id
 		await player(ctx,voice_client,id)
