@@ -20,6 +20,7 @@ class PhoneWave:
 		self.current_song = current_song
 		self.loop = False
 		self.latest_player_id = id
+		self.mutex = asyncio.Lock()
 		 
 def urlCreator(msg):
 	url="https://www.youtube.com/results?search_query="+msg
@@ -35,17 +36,17 @@ def musicGenerator(url_video):
 	return FFmpegPCMAudio(audio.url,**ffmpeg_options)
 
 async def player(ctx,voice_client,id):
-	while voice_client.is_playing():
-		await asyncio.sleep(1)
+	await phonewaves[ctx.guild.id].mutex.acquire()
 	if not phonewaves[ctx.guild.id].q.empty():
 		phonewaves[ctx.guild.id].current_song = phonewaves[ctx.guild.id].q.get()
 		await ctx.send(phonewaves[ctx.guild.id].current_song)
 		musica_finale = musicGenerator(phonewaves[ctx.guild.id].current_song)
 		voice_client.play(musica_finale)
-	while voice_client.is_playing():
-		await asyncio.sleep(1)
-	if ctx.guild.id in phonewaves and (phonewaves[ctx.guild.id].loop == False or phonewaves[ctx.guild.id].q.empty()) :
-		await asyncio.sleep(10)
+		while voice_client.is_playing():
+			await asyncio.sleep(1)
+	phonewaves[ctx.guild.id].mutex.release()
+	if ctx.guild.id in phonewaves and (phonewaves[ctx.guild.id].loop == False or phonewaves[ctx.guild.id].q.empty()):
+		await asyncio.sleep(600)
 		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
 			await voice_client.disconnect()
 			del phonewaves[ctx.guild.id]
