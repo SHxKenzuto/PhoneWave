@@ -37,14 +37,15 @@ def musicGenerator(url_video):
 async def player(ctx,voice_client,id):
 	while voice_client.is_playing():
 		await asyncio.sleep(1)
-	phonewaves[ctx.guild.id].current_song = phonewaves[ctx.guild.id].q.get()
-	await ctx.send(phonewaves[ctx.guild.id].current_song)
-	musica_finale = musicGenerator(phonewaves[ctx.guild.id].current_song)
-	voice_client.play(musica_finale)
+	if not phonewaves[ctx.guild.id].q.empty():
+		phonewaves[ctx.guild.id].current_song = phonewaves[ctx.guild.id].q.get()
+		await ctx.send(phonewaves[ctx.guild.id].current_song)
+		musica_finale = musicGenerator(phonewaves[ctx.guild.id].current_song)
+		voice_client.play(musica_finale)
 	while voice_client.is_playing():
 		await asyncio.sleep(1)
 	if ctx.guild.id in phonewaves and (phonewaves[ctx.guild.id].loop == False or phonewaves[ctx.guild.id].q.empty()) :
-		await asyncio.sleep(600)
+		await asyncio.sleep(10)
 		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
 			await voice_client.disconnect()
 			del phonewaves[ctx.guild.id]
