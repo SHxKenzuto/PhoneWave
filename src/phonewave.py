@@ -1,3 +1,17 @@
+""" Copyright (C) 2021 SHxKenzuto SimonJohnny Boo-ray SgtSteel 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 import discord
 from discord.ext import commands
 import urllib
@@ -39,20 +53,20 @@ def musicGenerator(url_video):
 async def player(ctx,voice_client,id):
 	if ctx.guild.id in phonewaves:
 		await phonewaves[ctx.guild.id].mutex.acquire()
-	if ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
-		phonewaves[ctx.guild.id].current_song = phonewaves[ctx.guild.id].q.get()
-		await ctx.send(phonewaves[ctx.guild.id].current_song)
-		musica_finale = musicGenerator(phonewaves[ctx.guild.id].current_song)
-		voice_client.play(musica_finale)
-		while voice_client.is_playing():
-			await asyncio.sleep(1)
-	if ctx.guild.id in phonewaves:
- 		phonewaves[ctx.guild.id].mutex.release()
-	if ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].loop == False and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
-		await asyncio.sleep(600)
-		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
-			await voice_client.disconnect()
-			del phonewaves[ctx.guild.id]
+		if ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
+			phonewaves[ctx.guild.id].current_song = phonewaves[ctx.guild.id].q.get()
+			await ctx.send(phonewaves[ctx.guild.id].current_song)
+			musica_finale = musicGenerator(phonewaves[ctx.guild.id].current_song)
+			voice_client.play(musica_finale)
+			while voice_client.is_playing():
+				await asyncio.sleep(1)
+		if ctx.guild.id in phonewaves:
+ 			phonewaves[ctx.guild.id].mutex.release()
+		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].loop == False and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
+			await asyncio.sleep(600)
+			if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
+				await voice_client.disconnect()
+				del phonewaves[ctx.guild.id]
 
 async def looper(ctx,voice_client,url_video):
 	while ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].loop:
