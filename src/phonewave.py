@@ -1,8 +1,23 @@
+""" Copyright (C) 2021 SHxKenzuto SimonJohnny Boo-ray SgtSteel 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 import discord
 from discord.ext import commands
 import urllib
 import re
 from discord import FFmpegPCMAudio
+from discord.ext.commands.errors import MissingRequiredArgument
 import pafy
 import asyncio
 import random
@@ -20,6 +35,7 @@ class PhoneWave:
 		self.current_song = current_song
 		self.loop = False
 		self.latest_player_id = id
+		self.mutex = asyncio.Lock()
 		 
 def urlCreator(msg):
 	url="https://www.youtube.com/results?search_query="+msg
@@ -35,20 +51,22 @@ def musicGenerator(url_video):
 	return FFmpegPCMAudio(audio.url,**ffmpeg_options)
 
 async def player(ctx,voice_client,id):
-	while voice_client.is_playing():
-		await asyncio.sleep(1)
-	if not phonewaves[ctx.guild.id].q.empty():
-		phonewaves[ctx.guild.id].current_song = phonewaves[ctx.guild.id].q.get()
-		await ctx.send(phonewaves[ctx.guild.id].current_song)
-		musica_finale = musicGenerator(phonewaves[ctx.guild.id].current_song)
-		voice_client.play(musica_finale)
-	while voice_client.is_playing():
-		await asyncio.sleep(1)
-	if ctx.guild.id in phonewaves and (phonewaves[ctx.guild.id].loop == False or phonewaves[ctx.guild.id].q.empty()) :
-		await asyncio.sleep(10)
-		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
-			await voice_client.disconnect()
-			del phonewaves[ctx.guild.id]
+	if ctx.guild.id in phonewaves:
+		await phonewaves[ctx.guild.id].mutex.acquire()
+		if ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
+			phonewaves[ctx.guild.id].current_song = phonewaves[ctx.guild.id].q.get()
+			await ctx.send(phonewaves[ctx.guild.id].current_song)
+			musica_finale = musicGenerator(phonewaves[ctx.guild.id].current_song)
+			voice_client.play(musica_finale)
+			while voice_client.is_playing():
+				await asyncio.sleep(1)
+		if ctx.guild.id in phonewaves:
+ 			phonewaves[ctx.guild.id].mutex.release()
+		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].loop == False and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
+			await asyncio.sleep(600)
+			if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
+				await voice_client.disconnect()
+				del phonewaves[ctx.guild.id]
 
 async def looper(ctx,voice_client,url_video):
 	while ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].loop:
@@ -105,7 +123,7 @@ async def skipall(ctx):
 		return
 	voice_client=discord.utils.get(bot.voice_clients,guild=ctx.guild)
 	if  voice_client!=None and voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
-		while not phonewaves[ctx.guild.id].q.empty():
+		while ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
 			phonewaves[ctx.guild.id].q.get()
 		voice_client.stop()
 
@@ -119,8 +137,7 @@ async def leave(ctx):
 	if  voice_client!=None and ctx.message.author.voice.channel == voice_client.channel:
 		await voice_client.disconnect()
 		del phonewaves[ctx.guild.id]
-		phonewaves[ctx.guild.id]=None
-
+  
 @bot.command()
 async def pause(ctx):
 	if ctx.message.author.voice==None:
@@ -147,9 +164,10 @@ async def replay(ctx):
 	voice_client=discord.utils.get(bot.voice_clients, guild=ctx.guild)
 	if  voice_client!=None and not voice_client.is_playing() and ctx.message.author.voice.channel == voice_client.channel:
 		await ctx.send(phonewaves[ctx.guild.id].current_song)
+		phonewaves[ctx.guild.id].q.put(phonewaves[ctx.guild.id].current_song)
 		phonewaves[ctx.guild.id].latest_player_id = random.random()
 		id = phonewaves[ctx.guild.id].latest_player_id
-		await player(ctx,voice_client,phonewaves[ctx.guild.id].current_song,id)
+		await player(ctx,voice_client,id)
 
 @bot.command()
 async def loop(ctx):
@@ -161,12 +179,18 @@ async def loop(ctx):
 		phonewaves[ctx.guild.id].loop=not(phonewaves[ctx.guild.id].loop)
 		await ctx.send("Loop {val}".format(val="ON" if phonewaves[ctx.guild.id].loop else "OFF"))
 		if phonewaves[ctx.guild.id].loop:
+			while ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
+				phonewaves[ctx.guild.id].q.get()
 			await looper(ctx,voice_client,phonewaves[ctx.guild.id].current_song)
 
 @bot.event
 async def on_ready():
 	print("PhoneWave Bot Started")
 
+@bot.event
+async def on_command_error(ctx,error):
+	if isinstance(error,MissingRequiredArgument):
+		await ctx.send("This command needs an argument")
 bot.run("ODg2OTkzODc0ODA2MDA1ODMx.YT9raw.xPYWCbUDzJ4Cn4UjqVC__pW8__U")
 
 print("PhoneWave Bot Stopped")
