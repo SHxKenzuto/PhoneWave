@@ -73,7 +73,9 @@ async def play(ctx,*,msg):
 		voice_client = await voice.connect()
 	elif not voice_client.is_playing() and voice_channel != voice_client:
 		await voice_client.move_to(voice_channel)
-	if re.fullmatch(r"https:\/\/www.youtube.com\/watch\?v=\S{11}",msg) == None:
+	
+	#if re.fullmatch(r"https:\/\/www.youtube.com\/watch\?v=\S{11}",msg) == None:
+	if re.fullmatch(r"(?:https?:\/\/)?(?:(?:(?:www\.?)?youtube\.com(?:\/(?:(?:watch\?.*?(v=[^&\s]+).*)|(?:v(\/.*))|(channel\/.+)|(?:user\/(.+))|(?:results\?(search_query=.+))))?)|(?:youtu\.be(\/.*)?))", msg) == None:
 		url_video = urlCreator(msg)
 	else:
 		url_video = msg
@@ -86,7 +88,6 @@ async def play(ctx,*,msg):
 		phonewaves[ctx.guild.id].latest_player_id = random.random()
 	id = phonewaves[ctx.guild.id].latest_player_id
 	await player(ctx,voice_client,id)
-
 
 @bot.command()
 async def skip(ctx):
