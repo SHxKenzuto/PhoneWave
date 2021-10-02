@@ -91,7 +91,9 @@ async def play(ctx,*,msg):
 		voice_client = await voice.connect()
 	elif not voice_client.is_playing() and voice_channel != voice_client:
 		await voice_client.move_to(voice_channel)
-	if re.fullmatch(r"https:\/\/www.youtube.com\/watch\?v=\S{11}",msg) == None:
+	
+	#if re.fullmatch(r"https:\/\/www.youtube.com\/watch\?v=\S{11}",msg) == None:
+	if re.fullmatch(r"(?:https?:\/\/)?(?:(?:(?:www\.?)?youtube\.com(?:\/(?:(?:watch\?.*?(v=[^&\s]+).*)|(?:v(\/.*))|(channel\/.+)|(?:user\/(.+))|(?:results\?(search_query=.+))))?)|(?:youtu\.be(\/.*)?))", msg) == None:
 		url_video = urlCreator(msg)
 	else:
 		url_video = msg
@@ -104,6 +106,58 @@ async def play(ctx,*,msg):
 		phonewaves[ctx.guild.id].latest_player_id = random.random()
 	id = phonewaves[ctx.guild.id].latest_player_id
 	await player(ctx,voice_client,id)
+
+
+@bot.command()
+async def playlist(ctx,*,msg):
+	if ctx.message.author.voice==None:
+		await ctx.send("You have to be in a voice channel in order to use this command")
+		return
+	voice_channel = ctx.message.author.voice.channel
+	voice = discord.utils.get(ctx.guild.voice_channels,name=voice_channel.name)
+	voice_client=discord.utils.get(bot.voice_clients,guild=ctx.guild)
+	if voice_client == None:
+		voice_client = await voice.connect()
+	elif not voice_client.is_playing() and voice_channel != voice_client:
+		await voice_client.move_to(voice_channel)
+
+	playlist_id_search = re.search(r"(?<=list=)([^&]+)+", msg)
+
+	if playlist_id_search is None:
+		await ctx.send("Invalid playlist url")
+		return
+
+	playlist_id = playlist_id_search.group(0)
+	playlist_url = "https://www.youtube.com/playlist?list=" + playlist_id
+
+	page_req = urllib.request.urlopen(playlist_url)
+	page_src = page_req.read().decode()
+
+
+	playlist_links = re.findall(r"watch\?v=(\S{11})", page_src)
+
+	"""
+	# questa cosa sarebbe carina, ma non funziona
+	if playlist_links is None:
+		await ctx.send("No items found in this playlist")
+		return
+	else:
+		await ctx.send("Queued " + len(playlist_links) + " items from " + playlist_url)
+	"""
+
+	for video_id in playlist_links:
+		video_url = "https://www.youtube.com/watch?v=" + video_id
+		if ctx.guild.id not in phonewaves:
+			phonewaves[ctx.guild.id]=PhoneWave(video_url,random.random())
+		else:
+			phonewaves[ctx.guild.id].q.put(video_url)
+
+#		await ctx.send("Put " + video_url + " in queue")
+
+	for i in playlist_links:
+		phonewaves[ctx.guild.id].latest_player_id = random.random()
+		id = phonewaves[ctx.guild.id].latest_player_id
+		await player(ctx,voice_client,id)
 
 
 @bot.command()
