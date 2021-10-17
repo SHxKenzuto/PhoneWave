@@ -84,6 +84,9 @@ async def play(ctx,*,msg):
 	if ctx.message.author.voice==None:
 		await ctx.send("You have to be in a voice channel in order to use this command")
 		return
+	if ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].loop:
+		await ctx.send("Can't use this command while looping")
+		return
 	voice_channel = ctx.message.author.voice.channel
 	voice = discord.utils.get(ctx.guild.voice_channels,name=voice_channel.name)
 	voice_client=discord.utils.get(bot.voice_clients,guild=ctx.guild)
@@ -235,6 +238,9 @@ async def loop(ctx):
 			while ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
 				phonewaves[ctx.guild.id].q.get()
 			await looper(ctx,voice_client,phonewaves[ctx.guild.id].current_song)
+		else:
+			while ctx.guild.id in phonewaves and not phonewaves[ctx.guild.id].q.empty():
+				phonewaves[ctx.guild.id].q.get()
 
 @bot.event
 async def on_ready():
