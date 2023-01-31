@@ -153,7 +153,8 @@ async def playlist(ctx,*,msg):
 		if ctx.guild.id not in phonewaves:
 			phonewaves[ctx.guild.id]=PhoneWave(video_url,random.random())
 		else:
-			phonewaves[ctx.guild.id].q.put(video_url)
+			if video_url not in phonewaves[ctx.guild.id].q.queue:
+				phonewaves[ctx.guild.id].q.put(video_url)
 
 #		await ctx.send("Put " + video_url + " in queue")
 
