@@ -24,7 +24,7 @@ import random
 import queue
 
 phonewaves = {}
-bot = commands.Bot(command_prefix='-')
+bot = commands.Bot(command_prefix='-', intents=discord.Intents.all())
 
 # INTERNAL DEFS
 
