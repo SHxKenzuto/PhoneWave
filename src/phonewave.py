@@ -61,7 +61,7 @@ async def player(ctx,voice_client,id):
 			while voice_client.is_playing():
 				await asyncio.sleep(1)
 		if ctx.guild.id in phonewaves:
- 			phonewaves[ctx.guild.id].mutex.release()
+			phonewaves[ctx.guild.id].mutex.release()
 		if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].loop == False and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
 			await asyncio.sleep(600)
 			if voice_client!=None and not voice_client.is_playing() and ctx.guild.id in phonewaves and phonewaves[ctx.guild.id].q.empty() and phonewaves[ctx.guild.id].latest_player_id == id:
