@@ -244,6 +244,6 @@ async def on_ready():
 async def on_command_error(ctx,error):
 	if isinstance(error,MissingRequiredArgument):
 		await ctx.send("This command needs an argument")
-bot.run("ODg2OTkzODc0ODA2MDA1ODMx.YT9raw.xPYWCbUDzJ4Cn4UjqVC__pW8__U")
+bot.run("")
 
 print("PhoneWave Bot Stopped")
