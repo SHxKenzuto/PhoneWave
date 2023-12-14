@@ -27,7 +27,7 @@ phonewaves = {}
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="-", intents=intents)
 
-ydl_opts = {"format": "bestaudio/best", "quiet": True, "extract_flat": "in_playlist"}
+ydl_opts = {"format": "bestaudio/best", "quiet": True}
 
 # INTERNAL DEFS
 
