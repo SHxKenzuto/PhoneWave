@@ -27,7 +27,7 @@ phonewaves = {}
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="-", intents=intents)
 
-ydl_opts = {"format": "bestaudio/best", "quiet": True}
+
 
 # INTERNAL DEFS
 
@@ -51,6 +51,7 @@ def urlCreator(msg):
 
 
 def musicGenerator(url_video):
+    ydl_opts = {"format": "bestaudio/best", "quiet": True}
     ffmpeg_options = {
         "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
         "options": "-vn",
@@ -101,7 +102,21 @@ async def looper(ctx, voice_client, url_video):
             id = phonewaves[ctx.guild.id].latest_player_id
             await player(ctx, voice_client, id)
         await asyncio.sleep(1)
-
+        
+def get_playlist_urls(playlist_url):
+    ydl_opts = {'quiet': True, 'extract_flat': True
+    }
+    video_urls = []
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        playlist_dict = ydl.extract_info(playlist_url, download=False)
+        
+        # Controlla se il risultato è una playlist
+        if 'entries' in playlist_dict:
+            # Itera su ogni video della playlist e raccoglie gli URL
+            for video in playlist_dict['entries']:
+                if video.get('url'):
+                    video_urls.append(video['url'])
+    return video_urls
 
 # DISCORD COMMANDS
 
@@ -167,10 +182,7 @@ async def playlist(ctx, *, msg):
     playlist_id = playlist_id_search.group(0)
     playlist_url = "https://www.youtube.com/playlist?list=" + playlist_id
 
-    page_req = urllib.request.urlopen(playlist_url)
-    page_src = page_req.read().decode()
-
-    playlist_links = re.findall(r"watch\?v=(\S{11})", page_src)
+    playlist_links = get_playlist_urls(playlist_url)
 
     """
 	# questa cosa sarebbe carina, ma non funziona
@@ -181,8 +193,7 @@ async def playlist(ctx, *, msg):
 		await ctx.send("Queued " + len(playlist_links) + " items from " + playlist_url)
 	"""
 
-    for video_id in playlist_links:
-        video_url = "https://www.youtube.com/watch?v=" + video_id
+    for video_url in playlist_links:
         if ctx.guild.id not in phonewaves:
             phonewaves[ctx.guild.id] = PhoneWave(video_url, random.random())
         else:
@@ -316,7 +327,7 @@ async def on_command_error(ctx, error):
     if isinstance(error, MissingRequiredArgument):
         await ctx.send("This command needs an argument")
 
-
+#PUT DISCORD TOKEN
 bot.run("")
 
 print("PhoneWave Bot Stopped")
